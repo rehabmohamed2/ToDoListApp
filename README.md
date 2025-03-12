@@ -4,11 +4,14 @@ A modern, feature-rich ToDo List application built with React Native and Expo, d
 
 ## 📱 App Preview
 
+### 📱 Android Version
 <div align="center">
-  <img src="screenshots/home-screen.png" alt="Home Screen" width="250" />
-  <img src="screenshots/categories.png" alt="Task Categories" width="250" />
-  <img src="screenshots/priority.png" alt="Priority Management" width="250" />
-  <img src="screenshots/search-filter.png" alt="Search and Filters" width="250" />
+  <img src="Screenshot/readme.jpeg" alt="Android Home Screen" width="270" style="margin-right: 10px"/>
+</div>
+
+### 🌐 Web Version
+<div align="center">
+  <img src="Screenshot/readme2.PNG" alt="Web Home Screen" width="600" style="margin-bottom: 10px"/>
 </div>
 
 ## ✨ Features
