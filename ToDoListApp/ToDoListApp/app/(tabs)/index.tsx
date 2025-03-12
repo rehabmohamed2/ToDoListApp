@@ -42,6 +42,9 @@ export default function ToDoList() {
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'none'>('none');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
 
   // Load tasks from AsyncStorage on mount
   useEffect(() => {
@@ -52,6 +55,27 @@ export default function ToDoList() {
   useEffect(() => {
     saveTasks();
   }, [tasks]);
+
+  // Add click outside handler to close menus
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const isFilterButton = target.closest('.web-filter-button');
+        
+        if (!isFilterButton) {
+          setShowSortMenu(false);
+          setShowPriorityMenu(false);
+          setShowCategoryMenu(false);
+        }
+      };
+
+      window.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        window.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, []);
 
   // Load tasks from AsyncStorage
   const loadTasks = async () => {
@@ -216,6 +240,49 @@ export default function ToDoList() {
     }
   };
 
+  // Function to handle dropdown button clicks
+  const handleDropdownClick = (e: any, dropdownType: 'sort' | 'priority' | 'category') => {
+    e.stopPropagation();
+    
+    switch (dropdownType) {
+      case 'sort':
+        setShowSortMenu(!showSortMenu);
+        setShowPriorityMenu(false);
+        setShowCategoryMenu(false);
+        break;
+      case 'priority':
+        setShowPriorityMenu(!showPriorityMenu);
+        setShowSortMenu(false);
+        setShowCategoryMenu(false);
+        break;
+      case 'category':
+        setShowCategoryMenu(!showCategoryMenu);
+        setShowSortMenu(false);
+        setShowPriorityMenu(false);
+        break;
+    }
+  };
+
+  // Function to handle dropdown item selection
+  const handleDropdownSelect = (e: any, type: string, value: any) => {
+    e.stopPropagation();
+    
+    switch (type) {
+      case 'sort':
+        setSortBy(value);
+        setShowSortMenu(false);
+        break;
+      case 'priority':
+        setFilterPriority(value);
+        setShowPriorityMenu(false);
+        break;
+      case 'category':
+        setFilterCategory(value);
+        setShowCategoryMenu(false);
+        break;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Search and Filter Section */}
@@ -228,37 +295,158 @@ export default function ToDoList() {
           placeholderTextColor="#888"
         />
         <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => {
-              Alert.alert(
-                'Sort By',
-                'Choose sorting option',
-                [
-                  { text: 'None', onPress: () => setSortBy('none') },
-                  { text: 'Due Date', onPress: () => setSortBy('dueDate') },
-                  { text: 'Priority', onPress: () => setSortBy('priority') },
-                ]
-              );
-            }}>
-            <MaterialIcons name="sort" size={20} color="#666" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => {
-              Alert.alert(
-                'Filter Priority',
-                'Choose priority level',
-                [
-                  { text: 'All', onPress: () => setFilterPriority('all') },
-                  { text: 'High', onPress: () => setFilterPriority('high') },
-                  { text: 'Medium', onPress: () => setFilterPriority('medium') },
-                  { text: 'Low', onPress: () => setFilterPriority('low') },
-                ]
-              );
-            }}>
-            <MaterialIcons name="filter-list" size={20} color="#666" />
-          </TouchableOpacity>
+          {Platform.OS === 'web' ? (
+            <>
+              <View style={styles.webFilterButton} className="web-filter-button">
+                <TouchableOpacity
+                  style={styles.filterButton}
+                  onPress={(e) => handleDropdownClick(e, 'sort')}>
+                  <MaterialIcons name="sort" size={20} color="#666" />
+                  <Text style={styles.filterText}>
+                    {sortBy === 'none' ? 'Sort' : sortBy === 'dueDate' ? 'Due Date' : 'Priority'}
+                  </Text>
+                </TouchableOpacity>
+                {showSortMenu && (
+                  <View style={styles.webDropdownMenu}>
+                    <TouchableOpacity
+                      style={[styles.webDropdownItem, sortBy === 'none' && styles.selectedItem]}
+                      onPress={(e) => handleDropdownSelect(e, 'sort', 'none')}>
+                      <Text style={[styles.dropdownText, sortBy === 'none' && styles.selectedText]}>
+                        None
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.webDropdownItem, sortBy === 'dueDate' && styles.selectedItem]}
+                      onPress={(e) => handleDropdownSelect(e, 'sort', 'dueDate')}>
+                      <Text style={[styles.dropdownText, sortBy === 'dueDate' && styles.selectedText]}>
+                        Due Date
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.webDropdownItem, sortBy === 'priority' && styles.selectedItem]}
+                      onPress={(e) => handleDropdownSelect(e, 'sort', 'priority')}>
+                      <Text style={[styles.dropdownText, sortBy === 'priority' && styles.selectedText]}>
+                        Priority
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+              <View style={styles.webFilterButton} className="web-filter-button">
+                <TouchableOpacity
+                  style={styles.filterButton}
+                  onPress={(e) => handleDropdownClick(e, 'priority')}>
+                  <MaterialIcons name="filter-list" size={20} color="#666" />
+                  <Text style={styles.filterText}>
+                    {filterPriority === 'all' ? 'Priority' : filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+                {showPriorityMenu && (
+                  <View style={styles.webDropdownMenu}>
+                    <TouchableOpacity
+                      style={[styles.webDropdownItem, filterPriority === 'all' && styles.selectedItem]}
+                      onPress={(e) => handleDropdownSelect(e, 'priority', 'all')}>
+                      <Text style={[styles.dropdownText, filterPriority === 'all' && styles.selectedText]}>
+                        All
+                      </Text>
+                    </TouchableOpacity>
+                    {['high', 'medium', 'low'].map((p) => (
+                      <TouchableOpacity
+                        key={p}
+                        style={[styles.webDropdownItem, filterPriority === p && styles.selectedItem]}
+                        onPress={(e) => handleDropdownSelect(e, 'priority', p)}>
+                        <Text style={[styles.dropdownText, filterPriority === p && styles.selectedText]}>
+                          {p.charAt(0).toUpperCase() + p.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+              <View style={styles.webFilterButton} className="web-filter-button">
+                <TouchableOpacity
+                  style={styles.filterButton}
+                  onPress={(e) => handleDropdownClick(e, 'category')}>
+                  <MaterialIcons name="category" size={20} color="#666" />
+                  <Text style={styles.filterText}>
+                    {filterCategory === 'all' ? 'Category' : filterCategory}
+                  </Text>
+                </TouchableOpacity>
+                {showCategoryMenu && (
+                  <View style={styles.webDropdownMenu}>
+                    <TouchableOpacity
+                      style={[styles.webDropdownItem, filterCategory === 'all' && styles.selectedItem]}
+                      onPress={(e) => handleDropdownSelect(e, 'category', 'all')}>
+                      <Text style={[styles.dropdownText, filterCategory === 'all' && styles.selectedText]}>
+                        All
+                      </Text>
+                    </TouchableOpacity>
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category}
+                        style={[styles.webDropdownItem, filterCategory === category && styles.selectedItem]}
+                        onPress={(e) => handleDropdownSelect(e, 'category', category)}>
+                        <Text style={[styles.dropdownText, filterCategory === category && styles.selectedText]}>
+                          {category}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Sort By',
+                    'Choose sorting option',
+                    [
+                      { text: 'None', onPress: () => setSortBy('none') },
+                      { text: 'Due Date', onPress: () => setSortBy('dueDate') },
+                      { text: 'Priority', onPress: () => setSortBy('priority') },
+                    ]
+                  );
+                }}>
+                <MaterialIcons name="sort" size={20} color="#666" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Filter Priority',
+                    'Choose priority level',
+                    [
+                      { text: 'All', onPress: () => setFilterPriority('all') },
+                      { text: 'High', onPress: () => setFilterPriority('high') },
+                      { text: 'Medium', onPress: () => setFilterPriority('medium') },
+                      { text: 'Low', onPress: () => setFilterPriority('low') },
+                    ]
+                  );
+                }}>
+                <MaterialIcons name="filter-list" size={20} color="#666" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Filter Category',
+                    'Choose category',
+                    [
+                      { text: 'All', onPress: () => setFilterCategory('all') },
+                      ...categories.map(category => ({
+                        text: category,
+                        onPress: () => setFilterCategory(category),
+                      })),
+                    ]
+                  );
+                }}>
+                <MaterialIcons name="category" size={20} color="#666" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 
@@ -457,6 +645,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    ...(Platform.OS === 'web' ? {
+      height: '100vh',
+      overflow: 'hidden',
+    } : {}),
   },
   inputContainer: {
     padding: 20,
@@ -578,6 +770,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    ...(Platform.OS === 'web' ? {
+      position: 'relative',
+      zIndex: 1000,
+    } : {}),
   },
   searchInput: {
     flex: 1,
@@ -591,11 +787,82 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: 'row',
     gap: 10,
+    ...(Platform.OS === 'web' ? {
+      position: 'relative',
+      zIndex: 1000,
+    } : {}),
+  },
+  webFilterButton: {
+    position: 'relative',
+    zIndex: 1000,
+    ...(Platform.OS === 'web' ? {
+      marginLeft: 8,
+    } : {}),
   },
   filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: '#f5f5f5',
+    gap: 6,
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      minWidth: 120,
+      justifyContent: 'space-between',
+    } : {}),
+  },
+  webDropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: 4,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    zIndex: 2000,
+    minWidth: 150,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      position: 'absolute',
+    } : {}),
+  },
+  webDropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+      ':hover': {
+        backgroundColor: '#f8f8f8',
+      },
+    } : {}),
+  },
+  selectedItem: {
+    backgroundColor: '#f8f8f8',
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  selectedText: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#666',
+    ...(Platform.OS === 'web' ? {
+      marginLeft: 8,
+      flex: 1,
+    } : {}),
   },
   categoryContainer: {
     marginBottom: 10,
