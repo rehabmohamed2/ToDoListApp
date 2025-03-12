@@ -1,4 +1,5 @@
-
-https://snack.expo.dev/@rehab_mohamed/todolist_rehab
-
+for android:
 https://snack.expo.dev/@rehab_mohamed/todolist_rehab?platform=android
+
+for web:
+https://snack.expo.dev/@rehab_mohamed/todolist_rehab?platform=web
